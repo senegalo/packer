@@ -3,11 +3,15 @@ xhr.onreadystatechange = function () {
     if (this.readyState === 4) {
         if (this.status === 200) {
             //this.response is what you're looking for
+            console.time("readingBytes");
             var packageBlob = this.response;
             var reader = new FileReader();
             reader.onload = function () {
+                console.timeEnd("readingBytes");
+                console.time("dataRead");
                 var data = new Uint8Array(reader.result);
                 readData(data);
+                console.timeEnd("dataRead");
             };
             reader.readAsArrayBuffer(packageBlob);
         } else {
@@ -44,12 +48,9 @@ var arrayToDecimal = function (array) {
 var readData = function(data){
     var frameStart = 0;
     var headerLength = 4;
-    console.log("loaded");
-    
     do {
         var dataStart = frameStart+headerLength;
         var currentFrameSize = arrayToDecimal(data.subarray(frameStart,dataStart));
-        console.log(currentFrameSize);
         if(currentFrameSize === 0){
             break;
         }
