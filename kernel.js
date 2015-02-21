@@ -55,21 +55,30 @@ var arrayToString = function (array) {
 
 var readData = function(data){
     var frameStart = 0;
-    var headerLength = 4;
-    var mimeLength = 32;
+    var frameLengthSize = 4;
+    var mimeLengthSize = 4;
     do {
-        var dataStart = frameStart+headerLength+mimeLength;
-        var currentFrameSize = arrayToDecimal(data.subarray(frameStart,dataStart-mimeLength));
-        var mimeType = arrayToString(data.subarray(frameStart+headerLength, dataStart)).trim();
-        if(currentFrameSize === 0){
+        var mimeLengthStart = frameStart+frameLengthSize;
+        var mimeTypeStart = mimeLengthStart+mimeLengthSize;
+        
+        var currentFrameSize = arrayToDecimal(data.subarray(frameStart,frameStart+frameLengthSize));
+       if(currentFrameSize === 0){
             break;
         }
+        
+        var mimeTypeLength = arrayToDecimal(data.subarray(mimeLengthStart, mimeTypeStart));
+        var dataStart = mimeTypeStart+mimeTypeLength;
+        
+        var mimeType = arrayToString(data.subarray(mimeLengthStart+mimeLengthSize, dataStart)).trim();
+        console.log(mimeType);
+        
         var imageBlob = new Blob([data.subarray(dataStart,dataStart+currentFrameSize)], {type: mimeType});
+        
         //var imageBlob = new Blob([new Uint8Array(data.slice())], {type: "image/jpeg"});
         var imgUrl = window.URL.createObjectURL(imageBlob);
         var img = document.createElement("img");
         img.src = imgUrl;
         document.body.appendChild(img);
-        frameStart = frameStart+headerLength+mimeLength+currentFrameSize;
+        frameStart += frameLengthSize+mimeLengthSize+mimeTypeLength+currentFrameSize ;
     } while(imageBlob.size > 0)
 };
