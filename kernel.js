@@ -45,21 +45,31 @@ var arrayToDecimal = function (array) {
     return out;
 };
 
+var arrayToString = function (array) {
+    var out = "";
+    for (var i = 0, cnt = array.length; i < cnt; i++) {
+        out += String.fromCharCode(array[i]);
+    }
+    return out;
+};
+
 var readData = function(data){
     var frameStart = 0;
     var headerLength = 4;
+    var mimeLength = 32;
     do {
-        var dataStart = frameStart+headerLength;
-        var currentFrameSize = arrayToDecimal(data.subarray(frameStart,dataStart));
+        var dataStart = frameStart+headerLength+mimeLength;
+        var currentFrameSize = arrayToDecimal(data.subarray(frameStart,dataStart-mimeLength));
+        var mimeType = arrayToString(data.subarray(frameStart+headerLength, dataStart)).trim();
         if(currentFrameSize === 0){
             break;
         }
-        var imageBlob = new Blob([data.subarray(dataStart,dataStart+currentFrameSize)], {type: "image/jpeg"});
+        var imageBlob = new Blob([data.subarray(dataStart,dataStart+currentFrameSize)], {type: mimeType});
         //var imageBlob = new Blob([new Uint8Array(data.slice())], {type: "image/jpeg"});
         var imgUrl = window.URL.createObjectURL(imageBlob);
         var img = document.createElement("img");
         img.src = imgUrl;
         document.body.appendChild(img);
-        frameStart = frameStart+headerLength+currentFrameSize;
+        frameStart = frameStart+headerLength+mimeLength+currentFrameSize;
     } while(imageBlob.size > 0)
 };
