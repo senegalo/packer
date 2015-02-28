@@ -19,10 +19,72 @@
                 -o-user-select: none;
                 user-select: none;
             }
-            </style>
+        </style>
     </head>
     <body>
         <div id="stuff"></div>
-        <script src="kernel.js" type="text/javascript"></script>
+        <script src="resource_packer.js" type="text/javascript"></script>
+        <script type="text/javascript">
+
+            var container = document.getElementById("stuff");
+
+
+            new ResourcePacker("packed.nzp", function (elements) {
+                for (var t in elements) {
+                    if (t === "image") {
+                        var images = elements.image;
+                        for (var i in images) {
+                            var img = document.createElement("img");
+
+                            //releasing the object url after the image is loaded
+                            //to free the file from the memory
+                            //https://developer.mozilla.org/en-US/docs/Web/API/URL/revokeObjectURL
+                            img.onload = function () {
+                                window.URL.revokeObjectURL(images[i].blobURL);
+                            };
+
+                            img.src = images[i].blobURL;
+                            container.appendChild(img);
+                        }
+                    } else if (t === "video") {
+                        var videos = elements.video;
+                        var vid = document.createElement("video");
+                        vid.width = 320;
+                        vid.height = 240;
+                        vid.controls = "controls";
+                        for (var v in videos) {
+                            var source = document.createElement("source");
+                            source.src = videos[v].blobURL;
+                            source.type = videos[v].type;
+                            vid.appendChild(source);
+                        }
+                        container.appendChild(vid);
+
+                        vid.addEventListener("loadeddata", function () {
+                            for (var v in videos) {
+                                window.URL.revokeObjectURL(videos[v].blobURL);
+                            }
+                        });
+
+                    } else if (t === "audio") {
+                        var audios = elements.audio;
+                        var aud = document.createElement("audio");
+                        aud.controls = "controls";
+                        for (var a in audios) {
+                            var source = document.createElement("source");
+                            source.src = audios[a].blobURL;
+                            source.type = audios[a].type;
+                            aud.appendChild(source);
+                        }
+                        container.appendChild(aud);
+                        aud.addEventListener("loadeddata", function () {
+                            for(var a in audios){
+                                window.URL.revokeObjectURL(audios[a].blobURL);
+                            }
+                        });
+                    }
+                }
+            });
+        </script>
     </body>
 </html>
